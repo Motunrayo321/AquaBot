@@ -1,7 +1,5 @@
 #include <AccelStepper.h>
-#include "mainpump.h"
-#include "minipump.h"
-#include "steppers.h"
+
 
 #define motorInterfaceTypeUp 8
 #define motorInterfaceTypeRound 4
