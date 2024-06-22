@@ -31,7 +31,7 @@ void flushRun(){
     //rotates the plate until the limit switch is hit
     if (homeButtonHit()) {
         stepperRound.stop();
-        stepper.setCurrentPosition(0);
+        stepperRound.setCurrentPosition(0);
     }
 }
 

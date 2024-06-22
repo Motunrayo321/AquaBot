@@ -15,13 +15,21 @@ const int stepsPerRevRound = 200;
 
 // Define parameters for keeping count of how many vials have been filled
 int totalDays = 30;
-int bottlesFilled = 1;
+int bottlesFilled = 0;
 const int dayMilliseconds = 5000;
 
-int rotationAngle = 12;
+
+// Controls how much the stepper has to rotate between vials
+int rotationAngle = 12; 
+int stepsToRotate;
+
+// TO VERIFY 
 int timeToFillTubes = 3000;
 
+//tracks the number of times the device has been flushed
+int flushCounter = 0;
 
+//sets the maximum speed and acceleration for the steppers
 void SetMotorPars() {
   // Set maximum speed and acceleration for stepper 1 and 2
   stepperUp.setMaxSpeed(1000);
@@ -34,10 +42,10 @@ void SetMotorPars() {
   
 }
 
-
-void SingleDropper() {
-  // Move stepper 1 a quarter of a revolution and stepper 2 six revolutions
-  stepperUp.moveTo(4096 * 2);  // Six revolutions
+//Moves the device to the vial filling position
+void moveToFill() {
+  // Move stepper 1 to the next vial position and stepper 2 two revolutions
+  stepperUp.moveTo(stepsPerRevUp * 2);  // two revolutions
   stepperRound.moveTo(stepsToRotate);  // Quarter revolution
   stepperRound.setSpeed(500);
 
@@ -60,6 +68,7 @@ void SingleDropper() {
 }
 
 
+
 void HomeRun() {
   // Move stepper 1 a quarter of a revolution and stepper 2 six revolutions
   stepperRound.moveTo(stepsPerRevRound * 2);  // Quarter revolution
@@ -67,7 +76,7 @@ void HomeRun() {
 
   if (HomeButtonHit) {
     stepperRound.stop();
-    stepper.setCurrentPosition(0);
+    stepperRound.setCurrentPosition(0);
   }
 }
 
@@ -94,7 +103,8 @@ void setup() {
   Serial.begin(9600);
   pinMode(LIMIT_SWITCH_PIN, INPUT);
 
-  int stepsToRotate = (rotationAngle/360) * stepsPerRevRound * bottlesFilled;
+  //TO VERIFY
+  stepsToRotate = (rotationAngle/360) * stepsPerRevRound * bottlesFilled;
 
 }
 
