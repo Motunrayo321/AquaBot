@@ -17,12 +17,11 @@ Servo nozzleServo;
 //rotates the plate 
 AccelStepper stepperRound(motorInterfaceTypeRound, motorRoundPins[0],motorRoundPins[1], motorRoundPins[2], motorRoundPins[3]);
 
-// Define the number of steps per revolution for your stepper motors
-const int stepsPerRevUp = 4096;
+// Define the number of steps per revolution for your stepper motor
 const int stepsPerRevRound = 200;
 
 // Controls how much the stepper has to rotate between vials
-int stepperRotationAngle = 12; 
+const int stepperRotationAngle = 12; 
 int stepsToRotate;
 
 //starting angle for servo
@@ -76,27 +75,17 @@ void fillVial() {
     }
 
     //activates the mini pump to fill the vial
-    while (analogRead(waterSensorPin) > emptyLevel){
-      miniPumpControl();
-    }
-
+    miniPumpControl();
     //raises nozzle to its start position
-    nozzleServo.write(sevroStartAngle);
+    nozzleServo.write(servoStartAngle);
   }
-}
-
-
-//raises the nozzle back to its original position
-void resetNozzle(){
-  nozzleServo.write(servoRotationAngle);
-
 }
 
 
 //moves the plate to the flushing slot
 void flushRun() {
   //rotates the stepper until the limit switch at the flushing slot is hit
-  stepperRound.moveTo(stepsPerRevRound * 2);  // Quarter revolution
+  stepperRound.moveTo(stepsPerRevRound * 2); 
   stepperRound.run();
 
   if (homeButtonHit()) {
@@ -124,9 +113,7 @@ void pumpFlush() {
     flushRun()
 
     //activates the mini pump to flush the device
-    while (analogRead(waterSensorPin) > emptyLevel){
-      miniPumpControl()
-    }
+    miniPumpControl();
     flushCounter++;
   }
 
