@@ -15,7 +15,7 @@
 Servo nozzleServo;
 
 //rotates the plate 
-AccelStepper stepperRound(motorInterfaceTypeRound, motorRoundPins[0],motorRoundPins[1], motorRoundPins[2], motorRoundPins[3]);
+AccelStepper stepperRound(motorInterfaceTypeRound, 8,9, 10, 11);
 
 // Define the number of steps per revolution for your stepper motor
 const int stepsPerRevRound = 200;
@@ -110,7 +110,7 @@ void pumpFlush() {
     }
 
     //moves the plate to the flushing position
-    flushRun()
+    flushRun();
 
     //activates the mini pump to flush the device
     miniPumpControl();
@@ -134,7 +134,23 @@ void fillReservoir() {}
 
 //cleans the filter 
 void airScour() {}
+//Tests the stepper rotating between each valve
+void testIndividualRotation(){
+  int oneStepRotation = (stepperRotationAngle/360) * stepsPerRevRound;
+  while (bottlesFilled != totalDays){
+    stepperRound.moveTo(oneStepRotation);
+    stepperRound.setSpeed(500);
+    stepperRound.runToPosition();
 
+    //check if the stepper has reached its target positions
+    if (stepperRound.distanceToGo() == 0){
+      bottlesFilled++;
+      Serial.print("at slot: ");
+      Serial.println(bottlesFilled+1);
+      delay(500);
+    }
+  }
+}
 
 void setup() {
   Serial.begin(9600);
@@ -156,6 +172,7 @@ void setup() {
 
 
 void loop() {
+  testIndividualRotation();
   if (bottlesFilled != totalDays) {
     Serial.print("Starting collection for day "); Serial.println(bottlesFilled);
 
@@ -172,6 +189,6 @@ void loop() {
 
     bottlesFilled++;
   }
-  Serial.println("All samples collected!")
+  Serial.println("All samples collected!");
  
 }
