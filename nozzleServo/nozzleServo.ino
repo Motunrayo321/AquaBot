@@ -7,9 +7,9 @@ TEST FILE FOR THE NOZZLE SERVO: for unit testing
 Servo nozzleServo;
 
 //starting angle for servo
-const int servoStartAngle = 0;
+const int servoRotationAngle = 0;
 //controls how much the servo has to rotate to move the nozzle
-const int servoRotationAngle = 45;
+const int servoStartAngle = 90;
 
 //sets up the servo 
 void setServoPars(){
@@ -22,16 +22,17 @@ void setServoPars(){
 void nozzleTest(){
   nozzleServo.write(servoRotationAngle);
   Serial.println("filling position");
-  delay(1000);
+  delay(3000);
   nozzleServo.write(servoStartAngle);
   Serial.println("start position");
+  delay(3000);
 }
 
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
   setServoPars();
-  pinMode(limitSwitchPin, INPUT_PULLUP);
+  //pinMode(limitSwitchPin, INPUT_PULLUP);
 
 }
 

@@ -100,7 +100,39 @@ void fillVialTest(){
   }
 }
 
-//tests  the servo, stepper and min
+//combined test with flushing
+void fullTest(){
+  while (bottlesFilled != totalDays){
+    // Rotates the plate to the next vial position
+    delay(3000);
+    stepperRound.step(stepsToRotate); 
+    Serial.println(stepsToRotate);
+
+    Serial.print("At slot: ");
+    Serial.println(bottlesFilled);
+    delay(1000);
+
+    //moves the servo down to the filling position and back
+    nozzleServo.write(servoRotationAngle);
+    Serial.println("filling position");
+    delay(1000);
+    miniPumpControl();
+    nozzleServo.write(servoStartAngle);
+    Serial.println("start position");
+    delay(1000);
+
+    bottlesFilled++;
+    stepsToRotate = stepsBetweenVials * (bottlesFilled+1);
+
+    //moves back to the starting slot
+    flushRun();
+    //activates the flushing mechanism
+    miniPumpControl();
+
+
+  }
+}
+
 //activates the miniature pump to move water from the reservoir to the vial/flushing zone
 void miniPumpControl(){
   //checks the volume of water drawn by the pump before activating it
