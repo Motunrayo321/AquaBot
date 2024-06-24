@@ -1,33 +1,32 @@
-#include <AccelStepper.h>
+#include <Stepper.h>
 #include <Servo.h>
 
 // pin definitions
 #define nozzleServoPin 3
-#define motorInterfaceTypeRound 4
-#define motorRoundpins = [8,9,10,11]
+#define motorRoundPin1 8
+#define motorRoundPin2 9
+#define motorRoundPin3 10
+#define motorRoundPin4 11
 #define limitSwitchPin 7
 #define waterSensorPin A0
 #define miniPumpPin 5
 
 
-
-//Moves the nozzle up and down
-Servo nozzleServo;
-
-//rotates the plate 
-AccelStepper stepperRound(motorInterfaceTypeRound, 8,9, 10, 11);
-
 // Define the number of steps per revolution for your stepper motor
 const int stepsPerRevRound = 200;
-
+const int vialCount = 31;
 // Controls how much the stepper has to rotate between vials
-const int stepperRotationAngle = 12; 
 int stepsToRotate;
+int stepsBetweenVials =  round(stepsPerRevRound/vialCount);
+//rotates the plate 
+Stepper stepperRound(stepsPerRevRound, motorRoundPin1,motorRoundPin2,motorRoundPin3,motorRoundPin4);
 
 //starting angle for servo
 const int servoStartAngle = 0;
 //controls how much the servo has to rotate to move the nozzle
 const int servoRotationAngle = 45;
+//Moves the nozzle up and down
+Servo nozzleServo;
 
 //water level set point parameters for the reservoir
 const int filledLevel = 500;
@@ -40,14 +39,6 @@ const int dayMilliseconds = 5000;
 const int timeToFillTubes = 3000;
 int bottlesFilled;
 
-//sets the maximum speed and acceleration for the stepper
-void setMotorPars() {
-  // Set maximum speed and acceleration for the stepper
-  stepperRound.setMaxSpeed(1000);
-  stepperRound.setAcceleration(500);
-  stepperRound.setCurrentPosition(0);
-  
-}
 
 //sets up the servo 
 void setServoPars(){
@@ -57,19 +48,20 @@ void setServoPars(){
 
 //fills the next vial
 void fillVial() {
+  //only moves the stepper if it is at its home/flush position
+  if (!homeButtonHit()){
+    flushRun();
+  }
   // Rotates the plate to the next vial position
-  stepperRound.moveTo(stepsToRotate); 
-  stepperRound.setSpeed(500);
-  stepperRound.runToPosition();
-  delay(2000);
+  else{
+    stepperRound.step(stepsToRotate);
+    delay(3000);
+  }
+  
+  //moves the nozzle down
+  nozzleServo.write(servoRotationAngle);
 
-  // Check if the stepper has reached its target positions
-  if (stepperRound.distanceToGo() == 0) {
-
-    //Moves the nozzle down
-    nozzleServo.write(servoRotationAngle);
-
-    //refills the reservoir with the mainpump until it holds 50mL of water
+  //refills the reservoir with the mainpump until it holds 50mL of water
     while (analogRead(waterSensorPin) < filledLevel){
      fillReservoir();
     }
@@ -78,19 +70,14 @@ void fillVial() {
     miniPumpControl();
     //raises nozzle to its start position
     nozzleServo.write(servoStartAngle);
-  }
 }
 
 
 //moves the plate to the flushing slot
 void flushRun() {
   //rotates the stepper until the limit switch at the flushing slot is hit
-  stepperRound.moveTo(stepsPerRevRound * 2); 
-  stepperRound.run();
-
-  if (homeButtonHit()) {
-    stepperRound.stop();
-    stepperRound.setCurrentPosition(0);
+  while (!homeButtonHit()){
+    stepperRound.step(-stepsBetweenVials);
   }
 }
 
@@ -134,23 +121,9 @@ void fillReservoir() {}
 
 //cleans the filter 
 void airScour() {}
-//Tests the stepper rotating between each valve
-void testIndividualRotation(){
-  int oneStepRotation = (stepperRotationAngle/360) * stepsPerRevRound;
-  while (bottlesFilled != totalDays){
-    stepperRound.moveTo(oneStepRotation);
-    stepperRound.setSpeed(500);
-    stepperRound.runToPosition();
 
-    //check if the stepper has reached its target positions
-    if (stepperRound.distanceToGo() == 0){
-      bottlesFilled++;
-      Serial.print("at slot: ");
-      Serial.println(bottlesFilled+1);
-      delay(500);
-    }
-  }
-}
+
+
 
 void setup() {
   Serial.begin(9600);
@@ -161,10 +134,9 @@ void setup() {
   //initializes the variables
   //TO VERIFY
   bottlesFilled = 0;
-  stepsToRotate = (stepperRotationAngle/360) * stepsPerRevRound * (bottlesFilled+1);
+  stepsToRotate = stepsBetweenVials * (bottlesFilled+1);
 
   //sets up the servo and stepper
-  setMotorPars();
   setServoPars();
 }
 
@@ -172,7 +144,6 @@ void setup() {
 
 
 void loop() {
-  testIndividualRotation();
   if (bottlesFilled != totalDays) {
     Serial.print("Starting collection for day "); Serial.println(bottlesFilled);
 
@@ -180,7 +151,7 @@ void loop() {
     pumpFlush();
 
     //Fills the vial for the current day
-    stepsToRotate = (stepperRotationAngle/360) * stepsPerRevRound * (bottlesFilled+1);
+    stepsToRotate = stepsBetweenVials * (bottlesFilled+1);
     fillVial();
 
     Serial.println("Done for day "); Serial.println(bottlesFilled);

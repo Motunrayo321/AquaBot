@@ -2,12 +2,12 @@
  
 void setup() {
   Serial.begin(9600);
-  pinMode(LIMIT_SWITCH_PIN, INPUT);
+  pinMode(LIMIT_SWITCH_PIN, INPUT_PULLUP);
 }
  
 void loop() {
  
-  if (digitalRead(LIMIT_SWITCH_PIN) == HIGH)
+  if (digitalRead(LIMIT_SWITCH_PIN) == LOW)
   {
     Serial.println("Time to drain...");
   }

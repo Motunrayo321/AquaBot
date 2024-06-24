@@ -27,6 +27,7 @@ int bottlesFilled = 0;
 
 //Tests the stepper rotating between each vial
 void testIndividualRotation(){
+  Serial.println("Testing individual rotation... ");
   while(bottlesFilled != totalDays){
     stepperRound.step(stepsBetweenVials);
     Serial.println(bottlesFilled);
@@ -41,15 +42,18 @@ void fillSequence(){
   
   while (bottlesFilled != totalDays){
     // Rotates the plate to the next vial position
-    stepperRound.step(stepsToRotate); 
     delay(3000);
+    stepperRound.step(stepsToRotate); 
+    Serial.println(stepsToRotate);
 
     Serial.print("At slot: ");
     Serial.println(bottlesFilled);
     delay(1000);
     bottlesFilled++;
+    stepsToRotate = stepsBetweenVials * (bottlesFilled+1);
     //moves back to the starting slot
     flushRun();
+
   }
 }
 
@@ -64,24 +68,26 @@ void flushRun(){
 
 //checks if the device has rotated to the home/flush position
 bool homeButtonHit() {
-  return(digitalRead(limitSwitchPin) == HIGH);
+  return(digitalRead(limitSwitchPin) == LOW);
 }
 
 void setup() {
+  pinMode(limitSwitchPin, INPUT_PULLUP);
   // put your setup code here, to run once:
   Serial.begin(9600);
   Serial.println("hi");
   bottlesFilled = 0;
-  stepperRound.setSpeed(60);
+  stepperRound.setSpeed(10);
   stepsToRotate = stepsBetweenVials * (bottlesFilled+1);
 
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-  Serial.println("Testing individual rotation: ");
-  testIndividualRotation();
+  
+  //testIndividualRotation();
   bottlesFilled= 0;
+  fillSequence();
   delay(3000);
 
 
