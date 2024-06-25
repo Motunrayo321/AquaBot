@@ -2,14 +2,16 @@
 #include <Servo.h>
 
 // pin definitions
-#define nozzleServoPin 3
+#define actuatorPin1 2
+#define actuatorPin2 3
+#define miniPumpPin1 4
+#define miniPumpPin2 6
+#define limitSwitchPin 7
 #define motorRoundPin1 8
 #define motorRoundPin2 9
 #define motorRoundPin3 10
 #define motorRoundPin4 11
-#define limitSwitchPin 7
 #define waterSensorPin A0
-#define miniPumpPin 5
 
 
 // Define the number of steps per revolution for your stepper motor
@@ -21,13 +23,6 @@ int stepsBetweenVials =  round(stepsPerRevRound/vialCount);
 //rotates the plate 
 Stepper stepperRound(stepsPerRevRound, motorRoundPin1,motorRoundPin2,motorRoundPin3,motorRoundPin4);
 
-//starting angle for servo
-const int servoStartAngle = 0;
-//controls how much the servo has to rotate to move the nozzle
-const int servoRotationAngle = 45;
-//Moves the nozzle up and down
-Servo nozzleServo;
-
 //water level set point parameters for the reservoir
 const int filledLevel = 500;
 const int emptyLevel = 200;
@@ -38,13 +33,6 @@ const int dayMilliseconds = 5000;
 // TO VERIFY 
 const int timeToFillTubes = 3000;
 int bottlesFilled;
-
-
-//sets up the servo 
-void setServoPars(){
-  nozzleServo.attach(nozzleServoPin);
-  nozzleServo.write(servoStartAngle);
-}
 
 //fills the next vial
 void fillVial() {
@@ -59,7 +47,9 @@ void fillVial() {
   }
   
   //moves the nozzle down
-  nozzleServo.write(servoRotationAngle);
+  extendActuator();
+  Serial.println("filling position");
+  stopActuator();
 
   //refills the reservoir with the mainpump until it holds 50mL of water
     while (analogRead(waterSensorPin) < filledLevel){
@@ -69,7 +59,7 @@ void fillVial() {
     //activates the mini pump to fill the vial
     miniPumpControl();
     //raises nozzle to its start position
-    nozzleServo.write(servoStartAngle);
+    retractActuator();
 }
 
 
@@ -110,10 +100,14 @@ void pumpFlush() {
 void miniPumpControl(){
   //checks the volume of water drawn by the pump before activating it
   while (analogRead(waterSensorPin) > emptyLevel){
-    digitalWrite(miniPumpPin, HIGH);
+    pumpForwards();
+    Serial.println("activating pump");
+    delay(500);
   }
 
-  digitalWrite(miniPumpPin, LOW);
+  stopPump();
+  delay(1000);
+  Serial.println("Turning off pump");
 }
 
 //activates the large pump to move water from the river into the reservoir
@@ -122,22 +116,55 @@ void fillReservoir() {}
 //cleans the filter 
 void airScour() {}
 
+void extendActuator(){
+  digitalWrite(actuatorPin1, HIGH);
+  digitalWrite(actuatorPin2, LOW);
+  delay(3000);
+}
+void stopActuator(){
+  digitalWrite(actuatorPin1, LOW);
+  digitalWrite(actuatorPin2, LOW);
+  delay(3000);
+}
 
+//retracts the actuator
+void retractActuator(){
+  digitalWrite(actuatorPin1, LOW);
+  digitalWrite(actuatorPin2, HIGH);
+  delay(3000);
+}
+
+void pumpForwards(){
+  digitalWrite(miniPumpPin1, HIGH);
+  digitalWrite(miniPumpPin2, LOW);
+
+}
+void pumpBackwards(){
+  digitalWrite(miniPumpPin1, LOW);
+  digitalWrite(miniPumpPin2, HIGH);
+}
+
+void stopPump(){
+  digitalWrite(miniPumpPin1, HIGH);
+  digitalWrite(miniPumpPin2, HIGH);
+}
 
 
 void setup() {
   Serial.begin(9600);
   pinMode(limitSwitchPin, INPUT);
   pinMode(waterSensorPin, INPUT);
-  pinMode(miniPumpPin, OUTPUT);
+  pinMode(miniPumpPin1, OUTPUT);
+  pinMode(miniPumpPin2, OUTPUT);
+  pinMode(actuatorPin1, OUTPUT);
+  pinMode(actuatorPin2,OUTPUT);
 
   //initializes the variables
   //TO VERIFY
   bottlesFilled = 0;
   stepsToRotate = stepsBetweenVials * (bottlesFilled+1);
 
-  //sets up the servo and stepper
-  setServoPars();
+
 }
 
 
