@@ -3,23 +3,37 @@
 */
 
 
-#define miniPumpPin 5
+#define miniPumpPin1 4
+#define miniPumpPin2 6
 #define waterSensorPin A0
 //water level set point parameters for the reservoir
 const int filledLevel = 500;
 const int emptyLevel = 200;
 
+void pumpForwards(){
+  digitalWrite(miniPumpPin1, HIGH);
+  digitalWrite(miniPumpPin2, LOW);
 
+}
+void pumpBackwards(){
+  digitalWrite(miniPumpPin1, LOW);
+  digitalWrite(miniPumpPin2, HIGH);
+}
+
+void stopPump(){
+  digitalWrite(miniPumpPin1, HIGH);
+  digitalWrite(miniPumpPin2, HIGH);
+}
 //activates the miniature pump to move water from the reservoir to the vial/flushing zone
 void miniPumpControl(){
   //checks the volume of water drawn by the pump before activating it
   while (analogRead(waterSensorPin) > emptyLevel){
-    digitalWrite(miniPumpPin, HIGH);
+    pumpForwards();
     Serial.println("activating pump");
     delay(500);
   }
 
-  digitalWrite(miniPumpPin, LOW);
+  stopPump();
   Serial.println("Turning off pump");
 }
 
@@ -27,9 +41,10 @@ void miniPumpControl(){
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
-  pinMode(miniPumpPin, OUTPUT);
+  pinMode(miniPumpPin1, OUTPUT);
+  pinMode(miniPumpPin2, OUTPUT);
   pinMode(waterSensorPin, INPUT);
-  digitalWrite(miniPumpPin, HIGH);
+
   delay(10000);
 }
 

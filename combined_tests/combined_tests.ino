@@ -9,8 +9,10 @@ Tests the combined action of the rotaryDistribution System
 #define motorRoundPin3 10
 #define motorRoundPin4 11
 #define limitSwitchPin 7
-#define nozzleServoPin 3
-#define miniPumpPin 5
+#define actuatorPin1 2
+#define actuatorPin2 3
+#define miniPumpPin1 4
+#define miniPumpPin2 6
 #define waterSensorPin A0
 
 // Define the number of steps per revolution for your stepper motor
@@ -26,25 +28,13 @@ int stepsBetweenVials = round(stepsPerRevRound/vialCount);
 const int totalDays = 30;
 int bottlesFilled = 0;
 
-Servo nozzleServo;
-
-//starting angle for servo
-const int servoStartAngle = 0;
-//controls how much the servo has to rotate to move the nozzle
-const int servoRotationAngle = 45;
-
 //water level set point parameters for the reservoir
 const int filledLevel = 500;
-const int emptyLevel = 200;
+const int emptyLevel = 300;
 
-//sets up the servo 
-void setServoPars(){
-  nozzleServo.attach(nozzleServoPin);
-  nozzleServo.write(servoStartAngle);
-}
 
-//tests the rotation of the servo to each vial position and the actuation of the servo for filling the vial
-void servoStepperTest(){
+//tests the rotation of the servo to each vial position and the linear actuator motion for filling the vial
+void actuatorStepperTest(){
   while (bottlesFilled != totalDays){
     // Rotates the plate to the next vial position
     delay(3000);
@@ -55,11 +45,11 @@ void servoStepperTest(){
     Serial.println(bottlesFilled);
     delay(1000);
 
-    //moves the servo down to the filling position and back
-    nozzleServo.write(servoRotationAngle);
+    //moves the actuator down to the filling position and back
+    extendActuator();
     Serial.println("filling position");
-    delay(1000);
-    nozzleServo.write(servoStartAngle);
+    stopActuator();
+    retractActuator();
     Serial.println("start position");
     delay(1000);
 
@@ -84,11 +74,11 @@ void fillVialTest(){
     delay(1000);
 
     //moves the servo down to the filling position and back
-    nozzleServo.write(servoRotationAngle);
+    extendActuator();
     Serial.println("filling position");
-    delay(1000);
+    stopActuator();
     miniPumpControl();
-    nozzleServo.write(servoStartAngle);
+    retractActuator();
     Serial.println("start position");
     delay(1000);
 
@@ -113,11 +103,11 @@ void fullTest(){
     delay(1000);
 
     //moves the servo down to the filling position and back
-    nozzleServo.write(servoRotationAngle);
+    extendActuator();
     Serial.println("filling position");
-    delay(1000);
+    stopActuator();
     miniPumpControl();
-    nozzleServo.write(servoStartAngle);
+    retractActuator();
     Serial.println("start position");
     delay(1000);
 
@@ -126,6 +116,7 @@ void fullTest(){
 
     //moves back to the starting slot
     flushRun();
+    delay(1000);
     //activates the flushing mechanism
     miniPumpControl();
 
@@ -137,13 +128,46 @@ void fullTest(){
 void miniPumpControl(){
   //checks the volume of water drawn by the pump before activating it
   while (analogRead(waterSensorPin) > emptyLevel){
-    digitalWrite(miniPumpPin, HIGH);
+    pumpForwards();
     Serial.println("activating pump");
     delay(500);
   }
 
-  digitalWrite(miniPumpPin, LOW);
+  stopPump();
+  delay(1000);
   Serial.println("Turning off pump");
+}
+void extendActuator(){
+  digitalWrite(actuatorPin1, HIGH);
+  digitalWrite(actuatorPin2, LOW);
+  delay(3000);
+}
+void stopActuator(){
+  digitalWrite(actuatorPin1, LOW);
+  digitalWrite(actuatorPin2, LOW);
+  delay(3000);
+}
+
+//retracts the actuator
+void retractActuator(){
+  digitalWrite(actuatorPin1, LOW);
+  digitalWrite(actuatorPin2, HIGH);
+  delay(3000);
+}
+
+void pumpForwards(){
+  digitalWrite(miniPumpPin1, HIGH);
+  digitalWrite(miniPumpPin2, LOW);
+
+}
+void pumpBackwards(){
+  digitalWrite(miniPumpPin1, LOW);
+  digitalWrite(miniPumpPin2, HIGH);
+}
+
+void stopPump(){
+  digitalWrite(miniPumpPin1, HIGH);
+  digitalWrite(miniPumpPin2, HIGH);
 }
 void flushRun(){
   //rotates the stepper until the limit switch at the flushing slot is hit
@@ -160,18 +184,21 @@ void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
   pinMode(limitSwitchPin, INPUT_PULLUP);
-  setServoPars();
   stepperRound.setSpeed(10);
   stepsToRotate = stepsBetweenVials * (bottlesFilled+1);
-  pinMode(miniPumpPin, OUTPUT);
+
+  pinMode(miniPumpPin1, OUTPUT);
+  pinMode(miniPumpPin2, OUTPUT);
+  pinMode(actuatorPin1, OUTPUT);
+  pinMode(actuatorPin2, OUTPUT);
   pinMode(waterSensorPin, INPUT);
-  digitalWrite(miniPumpPin, HIGH);
+
 
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-  fillVialTest();
+  fullTest();
   delay(3000);
 
 }
