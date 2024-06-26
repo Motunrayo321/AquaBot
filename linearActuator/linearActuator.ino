@@ -11,12 +11,20 @@ void setup(){
 
 void loop(){
   //retract
-  digitalWrite(relayPin1, HIGH);
-  digitalWrite(relayPin2, LOW);
-  delay(3000);
-
-  //extend
   digitalWrite(relayPin1, LOW);
   digitalWrite(relayPin2, HIGH);
-  delay(3000);
+  Serial.println("retracting");
+  delay(1900);
+
+  //stop in place
+  digitalWrite(relayPin1, LOW);
+  digitalWrite(relayPin2, LOW);
+  Serial.println("stopping");
+  delay(800);
+
+  //extend
+  digitalWrite(relayPin1, HIGH);
+  digitalWrite(relayPin2, LOW);
+  Serial.println("extending");
+  delay(4000);
 }

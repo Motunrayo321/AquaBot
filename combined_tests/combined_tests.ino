@@ -145,6 +145,7 @@ void extendActuator(){
 void stopActuator(){
   digitalWrite(actuatorPin1, LOW);
   digitalWrite(actuatorPin2, LOW);
+  //NEED TO MODIFY BASED ON PUMP VOLUME
   delay(3000);
 }
 
@@ -152,7 +153,7 @@ void stopActuator(){
 void retractActuator(){
   digitalWrite(actuatorPin1, LOW);
   digitalWrite(actuatorPin2, HIGH);
-  delay(3000);
+  delay(1900);
 }
 
 void pumpForwards(){
