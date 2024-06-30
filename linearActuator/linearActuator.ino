@@ -14,7 +14,7 @@ void loop(){
   digitalWrite(relayPin1, LOW);
   digitalWrite(relayPin2, HIGH);
   Serial.println("retracting");
-  delay(1900);
+  delay(1700);
 
   //stop in place
   digitalWrite(relayPin1, LOW);

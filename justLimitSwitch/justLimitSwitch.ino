@@ -7,15 +7,6 @@ void setup() {
  
 void loop() {
  
-  if (digitalRead(LIMIT_SWITCH_PIN) == LOW)
-  {
-    Serial.println("Time to drain...");
-  }
- 
-  else
-  {
-    // Keep Moving
-  }
-   
-  delay(100);
+  Serial.println(digitalRead(LIMIT_SWITCH_PIN));
+  delay(1000);
 }

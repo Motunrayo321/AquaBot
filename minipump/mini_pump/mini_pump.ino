@@ -3,8 +3,8 @@
 */
 
 
-#define miniPumpPin1 2
-#define miniPumpPin2 3
+#define miniPumpPin1 4
+#define miniPumpPin2 6
 #define waterSensorPin A0
 //water level set point parameters for the reservoir
 const int filledLevel = 500;
@@ -51,7 +51,6 @@ void setup() {
 void loop() {
   //tests whether the right volume of water is drawn
   pumpForwards();
-  delay(5000);
-  stopPump();
+  delay(10);
 
 }

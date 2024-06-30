@@ -1,11 +1,12 @@
 /*
 Tests the combined action of the rotaryDistribution System
 */
-#include <Stepper.h>
-#include <Servo.h>
+#include <Bonezegei_DRV8825.h>
 
-#define motorRoundPin1 8
-#define motorRoundPin2 9
+#define motorForward 1
+#define motorReverse 0
+#define motorDirPin 8
+#define motorStepPin 9
 #define motorRoundPin3 10
 #define motorRoundPin4 11
 #define limitSwitchPin 7
@@ -16,14 +17,14 @@ Tests the combined action of the rotaryDistribution System
 #define waterSensorPin A0
 
 // Define the number of steps per revolution for your stepper motor
-const int stepsPerRevRound = 200;
+const int stepsPerRevRound = 800;
 const int vialCount = 31;
 
-Stepper stepperRound(stepsPerRevRound, 8,9,10,11);
+Bonezegei_DRV8825 stepperRound(motorDirPin, motorStepPin);
 
 // Controls how much the stepper has to rotate between vials
 int stepsToRotate;
-int stepsBetweenVials = round(stepsPerRevRound/vialCount);
+int stepsBetweenVials = round(stepsPerRevRound/vialCount)+1;
 
 const int totalDays = 30;
 int bottlesFilled = 0;
@@ -36,9 +37,13 @@ const int emptyLevel = 300;
 //tests the rotation of the servo to each vial position and the linear actuator motion for filling the vial
 void actuatorStepperTest(){
   while (bottlesFilled != totalDays){
+    //only rotates if the plate is at the home position
+    while(!homeButtonHit()){
+      flushRun();
+    }
     // Rotates the plate to the next vial position
     delay(3000);
-    stepperRound.step(stepsToRotate); 
+    stepperRound.step(motorForward, stepsToRotate); 
     Serial.println(stepsToRotate);
 
     Serial.print("At slot: ");
@@ -66,7 +71,7 @@ void fillVialTest(){
   while (bottlesFilled != totalDays){
     // Rotates the plate to the next vial position
     delay(3000);
-    stepperRound.step(stepsToRotate); 
+    stepperRound.step(motorForward, stepsToRotate); 
     Serial.println(stepsToRotate);
 
     Serial.print("At slot: ");
@@ -95,7 +100,7 @@ void fullTest(){
   while (bottlesFilled != totalDays){
     // Rotates the plate to the next vial position
     delay(3000);
-    stepperRound.step(stepsToRotate); 
+    stepperRound.step(motorForward, stepsToRotate); 
     Serial.println(stepsToRotate);
 
     Serial.print("At slot: ");
@@ -124,15 +129,13 @@ void fullTest(){
   }
 }
 
+//tests the filling of 1 vial and 
+
 //activates the miniature pump to move water from the reservoir to the vial/flushing zone
 void miniPumpControl(){
   //checks the volume of water drawn by the pump before activating it
-  while (analogRead(waterSensorPin) > emptyLevel){
-    pumpForwards();
-    Serial.println("activating pump");
-    delay(500);
-  }
-
+  pumpForwards();
+  delay(7000);
   stopPump();
   delay(1000);
   Serial.println("Turning off pump");
@@ -157,13 +160,13 @@ void retractActuator(){
 }
 
 void pumpForwards(){
-  digitalWrite(miniPumpPin1, HIGH);
-  digitalWrite(miniPumpPin2, LOW);
+  digitalWrite(miniPumpPin1, LOW);
+  digitalWrite(miniPumpPin2, HIGH);
 
 }
 void pumpBackwards(){
-  digitalWrite(miniPumpPin1, LOW);
-  digitalWrite(miniPumpPin2, HIGH);
+  digitalWrite(miniPumpPin1, HIGH);
+  digitalWrite(miniPumpPin2, LOW);
 }
 
 void stopPump(){
@@ -173,7 +176,8 @@ void stopPump(){
 void flushRun(){
   //rotates the stepper until the limit switch at the flushing slot is hit
   while (!homeButtonHit()){
-    stepperRound.step(-stepsBetweenVials);
+    stepperRound.step(motorReverse, 10);
+    delay(50);
   }
 }
 
@@ -185,7 +189,7 @@ void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
   pinMode(limitSwitchPin, INPUT_PULLUP);
-  stepperRound.setSpeed(10);
+  stepperRound.setSpeed(7000);
   stepsToRotate = stepsBetweenVials * (bottlesFilled+1);
 
   pinMode(miniPumpPin1, OUTPUT);
@@ -193,13 +197,14 @@ void setup() {
   pinMode(actuatorPin1, OUTPUT);
   pinMode(actuatorPin2, OUTPUT);
   pinMode(waterSensorPin, INPUT);
+  
 
 
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-  fullTest();
+  actuatorStepperTest();
   delay(3000);
 
 }
