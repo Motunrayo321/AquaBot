@@ -7,8 +7,7 @@ Tests the combined action of the rotaryDistribution System
 #define motorReverse 0
 #define motorDirPin 8
 #define motorStepPin 9
-#define motorRoundPin3 10
-#define motorRoundPin4 11
+
 #define limitSwitchPin 7
 #define actuatorPin1 2
 #define actuatorPin2 3
@@ -98,6 +97,10 @@ void fillVialTest(){
 //combined test with flushing
 void fullTest(){
   while (bottlesFilled != totalDays){
+    //only rotates if the plate is at the home position
+    while(!homeButtonHit()){
+      flushRun();
+    }
     // Rotates the plate to the next vial position
     delay(3000);
     stepperRound.step(motorForward, stepsToRotate); 
@@ -135,7 +138,7 @@ void fullTest(){
 void miniPumpControl(){
   //checks the volume of water drawn by the pump before activating it
   pumpForwards();
-  delay(7000);
+  delay(8000);
   stopPump();
   delay(1000);
   Serial.println("Turning off pump");
@@ -197,6 +200,8 @@ void setup() {
   pinMode(actuatorPin1, OUTPUT);
   pinMode(actuatorPin2, OUTPUT);
   pinMode(waterSensorPin, INPUT);
+  stopPump();
+  retractActuator();
   
 
 
@@ -204,7 +209,12 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
-  actuatorStepperTest();
-  delay(3000);
+  //actuatorStepperTest();
+  for (int i = 0; i < 25; i++){
+    stepperRound.step(motorForward, 1);
+    Serial.println(i);
+    delay(500);
+  }
+  delay(30000);
 
 }
