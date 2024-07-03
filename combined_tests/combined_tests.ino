@@ -17,15 +17,15 @@ Tests the combined action of the rotaryDistribution System
 
 // Define the number of steps per revolution for your stepper motor
 const int stepsPerRevRound = 800;
-const int vialCount = 31;
+const int vialCount = 32;
 
 Bonezegei_DRV8825 stepperRound(motorDirPin, motorStepPin);
 
 // Controls how much the stepper has to rotate between vials
 int stepsToRotate;
-int stepsBetweenVials = round(stepsPerRevRound/vialCount)+1;
+int stepsBetweenVials = round(stepsPerRevRound/vialCount);
 
-const int totalDays = 30;
+const int totalDays = 31;
 int bottlesFilled = 0;
 
 //water level set point parameters for the reservoir
@@ -146,7 +146,7 @@ void miniPumpControl(){
 void extendActuator(){
   digitalWrite(actuatorPin1, HIGH);
   digitalWrite(actuatorPin2, LOW);
-  delay(3000);
+  delay(1500);
 }
 void stopActuator(){
   digitalWrite(actuatorPin1, LOW);
@@ -209,12 +209,7 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
-  //actuatorStepperTest();
-  for (int i = 0; i < 25; i++){
-    stepperRound.step(motorForward, 1);
-    Serial.println(i);
-    delay(500);
-  }
-  delay(30000);
+  actuatorStepperTest();
+  
 
 }
