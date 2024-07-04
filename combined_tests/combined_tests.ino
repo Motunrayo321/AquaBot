@@ -13,7 +13,12 @@ Tests the combined action of the rotaryDistribution System
 #define actuatorPin2 3
 #define miniPumpPin1 4
 #define miniPumpPin2 6
-#define waterSensorPin A0
+
+#define reservoirEmptyPin A0
+#define reservoirFullPin A1
+#define valvePowerPin 11
+#define mainPumpPin1 12
+#define mainPumpPin2 13
 
 // Define the number of steps per revolution for your stepper motor
 const int stepsPerRevRound = 800;
@@ -28,10 +33,9 @@ int stepsBetweenVials = round(stepsPerRevRound/vialCount);
 const int totalDays = 31;
 int bottlesFilled = 0;
 
-//water level set point parameters for the reservoir
-const int filledLevel = 500;
-const int emptyLevel = 300;
 
+const int flushLimit = 3;
+int flushCount;
 
 //tests the rotation of the servo to each vial position and the linear actuator motion for filling the vial
 void actuatorStepperTest(){
@@ -97,6 +101,10 @@ void fillVialTest(){
 //combined test with flushing
 void fullTest(){
   while (bottlesFilled != totalDays){
+
+    //flushes the system before the filling the next vial
+    flushSystem();
+
     //only rotates if the plate is at the home position
     while(!homeButtonHit()){
       flushRun();
@@ -122,17 +130,52 @@ void fullTest(){
     bottlesFilled++;
     stepsToRotate = stepsBetweenVials * (bottlesFilled+1);
 
-    //moves back to the starting slot
-    flushRun();
-    delay(1000);
-    //activates the flushing mechanism
-    miniPumpControl();
 
 
   }
 }
 
-//tests the filling of 1 vial and 
+//tests the flushing system
+void flushSystem(){
+  flushCount = 0;
+
+  //Goes to the flushing slot
+  Serial.println("Calling flushRun");
+  flushRun();
+  delay(2000);
+
+  //lowers the nozzle to the flush tube
+  Serial.println("Calling extendActuator");
+  extendActuator();
+  delay(3000);
+
+  //flushes the reservoir 3 times
+  while (flushCount != flushLimit){
+    Serial.print("Flush no."); Serial.println(flushCount+1);
+    Serial.print("Out of: "); Serial.println(flushLimit);
+    delay(1000);
+
+    //pumps water into the reservoir if there isn't enough water to flush the minipump
+    Serial.println("filling the reservoir")
+    fillReservoir();
+    stopMainPump();
+
+    //flushes the minipump
+    miniPumpControl();
+
+    //drains the reservoir until it is empty
+    drainReservoir();
+    flushCount++;
+    
+    delay(1000);
+  }
+
+  //flushing is done!
+  retractActuator();
+  delay(10000);
+
+}
+
 
 //activates the miniature pump to move water from the reservoir to the vial/flushing zone
 void miniPumpControl(){
@@ -143,6 +186,27 @@ void miniPumpControl(){
   delay(1000);
   Serial.println("Turning off pump");
 }
+
+//activates main pump to fill the reservoir
+void fillReservoir(){
+  while (!reservoirFull()){
+    activateMainPump();
+    delay(3000);
+  }
+  Serial.println("reservoir full");
+  stopMainPump();
+  
+}
+//drains the remaining water in the reservoir
+void drainReservoir() {
+  while (!reservoirEmpty()){
+    openValve();
+    delay(7000);
+    }
+  closeValve();
+  delay(5000);
+}
+
 void extendActuator(){
   digitalWrite(actuatorPin1, HIGH);
   digitalWrite(actuatorPin2, LOW);
@@ -160,6 +224,17 @@ void retractActuator(){
   digitalWrite(actuatorPin1, LOW);
   digitalWrite(actuatorPin2, HIGH);
   delay(1900);
+}
+
+
+void activateMainPump(){
+  digitalWrite(mainPumpPin1, LOW);
+  digitalWrite(mainPumpPin2, HIGH);
+}
+//turns off the main pump to stop filling the resrvoir
+void stopMainPump(){
+  digitalWrite(mainPumpPin1, HIGH);
+  digitalWrite(mainPumpPin2, HIGH);
 }
 
 void pumpForwards(){
@@ -184,6 +259,33 @@ void flushRun(){
   }
 }
 
+//checks if the reservoir needs to be drained
+bool reservoirEmpty(){
+  bool isEmpty = !digitalRead(reservoirEmptyPin);
+  Serial.print("Is there still water? "); Serial.println(isEmpty);
+  return(isEmpty);
+}
+
+//checks if the reservoir is sufficiently filled to flush the minipump
+bool reservoirFull(){
+  bool isFull = digitalRead(reservoirFullPin);
+  Serial.print("Is there enough water? "); Serial.println(isFull);
+  return(isFull);
+}
+
+
+void openValve(){
+  digitalWrite(valvePowerPin, HIGH);
+  Serial.println("Opening valve");
+}
+
+void closeValve(){
+  digitalWrite(valvePowerPin, LOW);
+  Serial.println("Closing valve");
+
+}
+
+
 bool homeButtonHit() {
   return(digitalRead(limitSwitchPin) == LOW);
 }
@@ -199,7 +301,10 @@ void setup() {
   pinMode(miniPumpPin2, OUTPUT);
   pinMode(actuatorPin1, OUTPUT);
   pinMode(actuatorPin2, OUTPUT);
+  pinMode(valvePowerPin, OUTPUT);
   pinMode(waterSensorPin, INPUT);
+  pinMode(mainPumpPin1, OUTPUT);
+  pinMode(mainPumpPin2, OUTPUT);
   stopPump();
   retractActuator();
   

@@ -49,7 +49,11 @@ void fillSequence() {
     }
     // Rotates the plate to the next vial position
     delay(3000);
-    stepperRound.step(motorForward, stepsToRotate);
+    for (int i = 0; i < stepsToRotate;i++){
+      stepperRound.step(motorForward, i);
+
+    }
+    //stepperRound.step(motorForward, stepsToRotate);
     Serial.println(stepsToRotate);
 
     Serial.print("At slot: ");
@@ -69,7 +73,7 @@ void fillSequence() {
 void flushRun() {
   //rotates the stepper until the limit switch at the flushing slot is hit
   while (!homeButtonHit()) {
-    stepperRound.step(motorReverse, 100);
+    stepperRound.step(motorReverse, 10);
   }
 }
 
@@ -86,16 +90,16 @@ void setup() {
   Serial.println("hi");
   bottlesFilled = 0;
   //microseconds per step. 7500us/step = 10RPM
-  stepperRound.setSpeed(5000);
+  stepperRound.setSpeed(8000);
   stepsToRotate = stepsBetweenVials * (bottlesFilled + 1);
 }
 
 void loop() {
-
+  delay(5000);
   // put your main code here, to run repeatedly:
   fillSequence();
   //bottlesFilled = 0;
   //flushRun();
-  //testIndividualRotation();
+  testIndividualRotation();
   delay(5000);
 }
