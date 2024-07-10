@@ -32,7 +32,7 @@ void testIndividualRotation() {
   Serial.println("Testing individual rotation... ");
   while (bottlesFilled != totalDays) {
     stepperRound.step(motorForward, stepsBetweenVials);
-    Serial.println(stepsBetweenVials);
+    Serial.println(bottlesFilled);
     bottlesFilled++;
     delay(2000);
   }
@@ -41,7 +41,7 @@ void testIndividualRotation() {
 // tests the stepper rotating between the flush position and all the vial positions
 
 void fillSequence() {
-
+  bottlesFilled = 0;
   while (bottlesFilled != totalDays) {
     //only rotates if the plate is at the home position
     while (!homeButtonHit()) {
@@ -49,9 +49,9 @@ void fillSequence() {
     }
     // Rotates the plate to the next vial position
     delay(3000);
-    for (int i = 0; i < stepsToRotate;i++){
-      stepperRound.step(motorForward, i);
-
+    for (int i = 0; i < stepsToRotate; i+= 25){
+      stepperRound.step(motorForward,25);
+      //delay(70);
     }
     //stepperRound.step(motorForward, stepsToRotate);
     Serial.println(stepsToRotate);
@@ -74,6 +74,7 @@ void flushRun() {
   //rotates the stepper until the limit switch at the flushing slot is hit
   while (!homeButtonHit()) {
     stepperRound.step(motorReverse, 10);
+    delay(50);
   }
 }
 
@@ -100,6 +101,6 @@ void loop() {
   fillSequence();
   //bottlesFilled = 0;
   //flushRun();
-  testIndividualRotation();
+  //testIndividualRotation();
   delay(5000);
 }
