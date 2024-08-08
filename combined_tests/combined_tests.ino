@@ -9,20 +9,20 @@ Tests the combined action of the rotaryDistribution System
 #define motorDirPin 8
 #define motorStepPin 9
 
+
 #define limitSwitchPin 7
 #define actuatorPin1 2
 #define actuatorPin2 3
 #define miniPumpPin1 4
 #define miniPumpPin2 6
 
-#define reservoirEmptyPin A0
-#define reservoirFullPin A1
+#define reservoirEmptyPin A1
+#define reservoirFullPin A0
 #define flowSensePin 10
 #define valvePowerPin 11
 #define mainPumpPin1 12
 #define mainPumpPin2 13
-#define mainPumpPin3 14
-#define mainPumpPin4 15
+
 
 
 
@@ -33,7 +33,7 @@ const int mainPumpStepsPerRevRound = 200;
 const int vialCount = 32;
 
 Bonezegei_DRV8825 stepperRound(motorDirPin, motorStepPin);
-Stepper mainPump = (mainPumpStepsPerRevRound, mainPumpPin1, mainPumpPin2, mainPumpPin3, mainPumpPin4);
+Bonezegei_DRV8825 mainPump(mainPumpPin1, mainPumpPin2);
 
 // Controls how much the stepper has to rotate between vials
 int stepsToRotate;
@@ -48,6 +48,7 @@ int flushCount;
 
 //tests the rotation of the servo to each vial position and the linear actuator motion for filling the vial
 void actuatorStepperTest() {
+  //int fsrHitCount = 0;
   while (bottlesFilled != totalDays) {
     //only rotates if the plate is at the home position
     while (!homeButtonHit()) {
@@ -56,6 +57,12 @@ void actuatorStepperTest() {
     // Rotates the plate to the next vial position
     delay(3000);
     stepperRound.step(motorForward, stepsToRotate);
+    //rotates the plate if it stops short
+    while(analogRead(fsrPin) < 30){
+      stepperRound.step(motorForward,2);
+      delay(100);
+      Serial.println(analogRead(fsrPin));
+    }
     Serial.println(stepsToRotate);
 
     Serial.print("At slot: ");
@@ -93,7 +100,7 @@ void fillVialTest() {
       flushRun();
     }
     // Rotates the plate to the next vial position
-    delay(3000);
+    //delay(3000);
     stepperRound.step(motorForward, stepsToRotate);
     Serial.println(stepsToRotate);
 
@@ -164,7 +171,7 @@ void flushSystem() {
 
   //Goes to the flushing slot
   Serial.println("Calling flushRun");
-  flushRun();
+  //flushRun();
   delay(2000);
 
   //lowers the nozzle to the flush tube
@@ -217,19 +224,15 @@ void miniPumpControl() {
 
 //activates main pump to fill the reservoir
 void fillReservoir() {
-  while (!reservoirFull()) {
-    activateMainPump();
-    delay(3000);
-  }
+  activateMainPump();
+  delay(7000);
   Serial.println("reservoir full");
   //stopMainPump();
 }
 //drains the remaining water in the reservoir
 void drainReservoir() {
-  while (!reservoirEmpty()) {
-    openValve();
-    delay(7000);
-  }
+  openValve();
+  delay(5000);
   closeValve();
   delay(5000);
 }
@@ -257,12 +260,13 @@ void retractActuator() {
 
 
 void activateMainPump() {
-  mainPump.step(30);
+  mainPump.step(motorForward,35000);
 }
 void filterFlush() {
-  mainPump.step(30);
+  Serial.println("Forward-flushing now");
+  mainPump.step(motorForward,35000);
   Serial.println("Back-flushing now!");
-  mainPump.step(-350000);
+  mainPump.step(motorReverse, -35000);
 }
 //turns off the main pump to stop filling the resrvoir
 void stopMainPump() {
@@ -280,8 +284,8 @@ void pumpBackwards() {
 }
 
 void stopPump() {
-  digitalWrite(miniPumpPin1, HIGH);
-  digitalWrite(miniPumpPin2, HIGH);
+  digitalWrite(miniPumpPin1, LOW);
+  digitalWrite(miniPumpPin2, LOW);
 }
 void flushRun() {
   //rotates the stepper until the limit switch at the flushing slot is hit
@@ -337,6 +341,7 @@ void setup() {
   pinMode(valvePowerPin, OUTPUT);
   pinMode(reservoirEmptyPin, INPUT);
   pinMode(reservoirFullPin, INPUT);
+  pinMode(fsrPin, INPUT);
   mainPump.setSpeed(250);
   stopPump();
   //stopMainPump();
@@ -345,6 +350,7 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
+  bottlesFilled =0;
   //actuatorStepperTest();
   //fillVialTest();
   //flushSystem();
@@ -352,4 +358,14 @@ void loop() {
   //digitalWrite(4, HIGH);
   //digitalWrite(6,LOW);
   fullTest();
+  //filterFlush();
+  //miniPumpControl();
+  //pumpBackwards();
+  //fullTest();
+  // digitalWrite(11, HIGH);
+  // delay(5000);
+  // digitalWrite(11, LOW);
+  // Serial.println("1");
+  // delay(5000);
+  //extendActuator();
 }

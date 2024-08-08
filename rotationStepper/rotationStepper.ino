@@ -91,16 +91,10 @@ void setup() {
   Serial.println("hi");
   bottlesFilled = 0;
   //microseconds per step. 7500us/step = 10RPM
-  stepperRound.setSpeed(8000);
+  stepperRound.setSpeed(4000);
   stepsToRotate = stepsBetweenVials * (bottlesFilled + 1);
 }
 
 void loop() {
-  delay(5000);
-  // put your main code here, to run repeatedly:
-  fillSequence();
-  //bottlesFilled = 0;
-  //flushRun();
-  //testIndividualRotation();
-  delay(5000);
+  stepperRound.step(motorForward,5000);
 }
