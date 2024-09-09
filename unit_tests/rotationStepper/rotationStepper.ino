@@ -9,8 +9,8 @@ TEST FILE FOR THE ROTATION STEPPER MOTOR: used for unit testing of the motor con
 #define motorForward 1
 #define motorReverse 0
 
-#define motorDirPin 8
-#define motorStepPin 9
+#define motorDirPin 29
+#define motorStepPin 27
 #define limitSwitchPin 7
 
 // Define the number of steps per revolution for your stepper motor
@@ -96,5 +96,5 @@ void setup() {
 }
 
 void loop() {
-  stepperRound.step(motorForward,5000);
+  fillSequence();
 }

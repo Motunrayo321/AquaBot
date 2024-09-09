@@ -1,27 +1,28 @@
 /* TEST FILE FOR THE RESERVOIR FLUSHING SYSTEMS: Tests the flushing of the reservoir
 */
 
-#include <Stepper.h>
+#include <Bonezegei_DRV8825.h>
 
+#define mainPumpDirPin 25
+#define mainPumpStepPin 23
 
 // Define the number of steps per revolution for your stepper motor
 const int stepsPerRevRound = 200;
 
-Stepper mainPump(stepsPerRevRound, 8,9,10,11);
+Bonezegei_DRV8825 mainPump(mainPumpDirPin, mainPumpStepPin);
 
 
 #define waterLevelPin A0
-#define valvePowerPin 3
+#define valvePowerPin 11
 const int flushLimit = 3;
 
 int flushCount;
 
 
-void activateValve() {
-  while (reservoirFull()){
-    openValve();
-    delay(7000);
-    }
+//drains the remaining water in the reservoir
+void drainReservoir() {
+  openValve();
+  delay(5000);
   closeValve();
   delay(5000);
 }
@@ -34,15 +35,11 @@ void flushRun(){
 }
 
 
-bool reservoirFull(){
-  bool isFull = digitalRead(waterLevelPin);
-  Serial.print("Is it full yet? "); Serial.println(isFull);
-  return(isFull == HIGH);
-}
-
 void filterFlush() {
+  Serial.println("Forward-flushing now");
+  mainPump.step(motorForward,35000);
   Serial.println("Back-flushing now!");
-  mainPump.step(-350000);
+  mainPump.step(motorReverse, -35000);
 }
 
 
@@ -81,6 +78,15 @@ void setup() {
 }
 
 void loop() {
+
+  while(1){
+    openValve();
+    Serial.println("opening valve");
+    delay(4000);
+    closeValve();
+    Serial.println("closing valve");
+    delay(4000);
+  }
   // put your main code here, to run repeatedly:
   flushCount = 1;
 

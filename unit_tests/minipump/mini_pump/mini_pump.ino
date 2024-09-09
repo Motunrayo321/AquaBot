@@ -10,13 +10,13 @@ const int filledLevel = 500;
 const int emptyLevel = 200;
 
 void pumpForwards(){
-  digitalWrite(miniPumpPin1, LOW);
-  digitalWrite(miniPumpPin2, HIGH);
+  digitalWrite(miniPumpPin1, HIGH);
+  digitalWrite(miniPumpPin2, LOW);
 
 }
 void pumpBackwards(){
-  digitalWrite(miniPumpPin1, HIGH);
-  digitalWrite(miniPumpPin2, LOW);
+  digitalWrite(miniPumpPin1, LOW);
+  digitalWrite(miniPumpPin2, HIGH);
 }
 
 void stopPump(){
@@ -28,8 +28,12 @@ void miniPumpControl(){
   pumpForwards();
   Serial.println("pumpforwards");
   delay(5000);
+  Serial.println("stop pump");
   stopPump();
   delay(5000);
+  pumpBackwards();
+  Serial.println("pump backwards");
+  delay(2000);
 }
 
 

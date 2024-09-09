@@ -6,8 +6,8 @@ Tests the combined action of the rotaryDistribution System
 
 #define motorForward 1
 #define motorReverse 0
-#define motorDirPin 8
-#define motorStepPin 9
+#define motorDirPin 29
+#define motorStepPin 27
 
 
 #define limitSwitchPin 7
@@ -16,12 +16,9 @@ Tests the combined action of the rotaryDistribution System
 #define miniPumpPin1 4
 #define miniPumpPin2 6
 
-#define reservoirEmptyPin A1
-#define reservoirFullPin A0
-#define flowSensePin 10
 #define valvePowerPin 11
-#define mainPumpPin1 12
-#define mainPumpPin2 13
+#define mainPumpDirPin 33
+#define mainPumpStepPin 31
 
 
 
@@ -33,7 +30,7 @@ const int mainPumpStepsPerRevRound = 200;
 const int vialCount = 32;
 
 Bonezegei_DRV8825 stepperRound(motorDirPin, motorStepPin);
-Bonezegei_DRV8825 mainPump(mainPumpPin1, mainPumpPin2);
+Bonezegei_DRV8825 mainPump(mainPumpDirPin, mainPumpStepPin);
 
 // Controls how much the stepper has to rotate between vials
 int stepsToRotate;
@@ -57,12 +54,7 @@ void actuatorStepperTest() {
     // Rotates the plate to the next vial position
     delay(3000);
     stepperRound.step(motorForward, stepsToRotate);
-    //rotates the plate if it stops short
-    while(analogRead(fsrPin) < 30){
-      stepperRound.step(motorForward,2);
-      delay(100);
-      Serial.println(analogRead(fsrPin));
-    }
+  
     Serial.println(stepsToRotate);
 
     Serial.print("At slot: ");
@@ -171,13 +163,13 @@ void flushSystem() {
 
   //Goes to the flushing slot
   Serial.println("Calling flushRun");
-  //flushRun();
+  flushRun();
   delay(2000);
 
   //lowers the nozzle to the flush tube
   Serial.println("Calling extendActuator");
   extendActuator();
-  delay(3000);
+  delay(2000);
 
   //cleans the filter by flushing water back and forth
   filterFlush();
@@ -225,7 +217,6 @@ void miniPumpControl() {
 //activates main pump to fill the reservoir
 void fillReservoir() {
   activateMainPump();
-  delay(7000);
   Serial.println("reservoir full");
   //stopMainPump();
 }
@@ -260,18 +251,23 @@ void retractActuator() {
 
 
 void activateMainPump() {
-  mainPump.step(motorForward,35000);
+  int count = 0;
+  mainPump.step(motorForward,5000);
+  
 }
 void filterFlush() {
   Serial.println("Forward-flushing now");
-  mainPump.step(motorForward,35000);
+  mainPump.step(motorForward,5000);
+  delay(2000);
   Serial.println("Back-flushing now!");
-  mainPump.step(motorReverse, -35000);
+  mainPump.step(motorReverse, 5000);
+  delay(2000);
+
 }
 //turns off the main pump to stop filling the resrvoir
 void stopMainPump() {
-  digitalWrite(mainPumpPin1, HIGH);
-  digitalWrite(mainPumpPin2, HIGH);
+  digitalWrite(mainPumpDirPin, HIGH);
+  digitalWrite(mainPumpStepPin, HIGH);
 }
 
 void pumpForwards() {
@@ -293,22 +289,6 @@ void flushRun() {
     stepperRound.step(motorReverse, 10);
     delay(50);
   }
-}
-
-//checks if the reservoir needs to be drained
-bool reservoirEmpty() {
-  bool isEmpty = !(digitalRead(reservoirEmptyPin));
-  Serial.print("Is there still water? ");
-  Serial.println(!isEmpty);
-  return (isEmpty);
-}
-
-//checks if the reservoir is sufficiently filled to flush the minipump
-bool reservoirFull() {
-  bool isFull = digitalRead(reservoirFullPin);
-  Serial.print("Is there enough water? ");
-  Serial.println(isFull);
-  return (isFull);
 }
 
 void openValve() {
@@ -339,10 +319,9 @@ void setup() {
   pinMode(actuatorPin1, OUTPUT);
   pinMode(actuatorPin2, OUTPUT);
   pinMode(valvePowerPin, OUTPUT);
-  pinMode(reservoirEmptyPin, INPUT);
-  pinMode(reservoirFullPin, INPUT);
-  pinMode(fsrPin, INPUT);
-  mainPump.setSpeed(250);
+  //pinMode(reservoirEmptyPin, INPUT);
+  //pinMode(reservoirFullPin, INPUT);
+  mainPump.setSpeed(1000);
   stopPump();
   //stopMainPump();
   retractActuator();
